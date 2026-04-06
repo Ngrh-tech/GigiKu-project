@@ -118,7 +118,7 @@
             <div class="detection-section"><h2><i class="fas fa-history"></i> Riwayat Deteksi Terakhir</h2><div id="recentHistory"></div></div>
         </div>
 
-        <!-- TIPS & ARTIKEL (dengan 5 tips baru) -->
+        <!-- TIPS & ARTIKEL (5 tips baru) -->
         <div id="tipsPage" class="page">
             <h2><i class="fas fa-lightbulb"></i> Tips Menjaga Kesehatan Gigi dan Mulut</h2>
             <div class="articles-grid" id="articlesList"></div>
@@ -347,7 +347,7 @@
         showToast("Riwayat PDF diunduh");
     }
 
-    // ==================== DETEKSI GAMBAR ====================
+    // ==================== DETEKSI GAMBAR (parameter baru: threshold 75, sehat <2%, awal 2-8%, lanjutan >8%) ====================
     let stream = null, currentImageData = null;
     function openCamera() {
         stopCamera();
@@ -403,7 +403,8 @@
                 const data = imgData.data;
                 let totalPixels = data.length / 4;
                 let darkPixels = 0;
-                const DARK_THRESHOLD = 50;
+                // PARAMETER BARU: ambang kecerahan 75 (lebih sensitif untuk white spot dan lubang kecil)
+                const DARK_THRESHOLD = 75;
                 for (let i = 0; i < data.length; i += 4) {
                     let brightness = (data[i] + data[i+1] + data[i+2]) / 3;
                     if (brightness < DARK_THRESHOLD) darkPixels++;
@@ -411,19 +412,20 @@
                 let darkRatio = (darkPixels / totalPixels) * 100;
                 let resultText = "", advice = "", explanation = "";
                 let isHealthy = false;
-                if (darkRatio < 5.0) {
+                // BATAS BARU: sehat <2%, indikasi awal 2-8%, lanjutan >8%
+                if (darkRatio < 2.0) {
                     isHealthy = true;
                     resultText = "✅ Hasil Analisis: Gigi Anda tampak SEHAT.";
                     advice = "Pertahankan kebiasaan menyikat gigi dengan fluoride, kurangi konsumsi gula, dan lakukan pemeriksaan rutin setiap 6 bulan.";
-                    explanation = `Penjelasan: Berdasarkan analisis gambar, hanya ditemukan ${darkRatio.toFixed(2)}% area yang sangat gelap (ambang kecerahan <${DARK_THRESHOLD}). Nilai ini berada di bawah batas normal 5%, sehingga tidak terdeteksi indikasi karies aktif. Gigi sehat umumnya memiliki permukaan yang relatif terang dan homogen. Namun, hasil ini bisa dipengaruhi oleh pencahayaan saat pengambilan foto. Pastikan foto diambil dengan cahaya yang cukup dan area gigi terlihat jelas.`;
-                } else if (darkRatio < 12.0) {
+                    explanation = `Penjelasan: Berdasarkan analisis gambar, hanya ditemukan ${darkRatio.toFixed(2)}% area yang gelap (ambang kecerahan <${DARK_THRESHOLD}). Nilai ini berada di bawah batas normal 2%, sehingga tidak terdeteksi indikasi karies aktif. Namun, jika Anda merasa ada lubang, coba foto dengan pencahayaan lebih redup atau dari sudut berbeda.`;
+                } else if (darkRatio < 8.0) {
                     resultText = "⚠️ Hasil Analisis: Ada indikasi awal GIGI BERLUBANG (karies dini).";
-                    advice = "Segera lakukan tindakan pencegahan: kurangi makanan manis, sikat gigi dengan pasta gigi berfluoride, dan periksakan ke puskesmas terdekat untuk penanganan lebih lanjut.";
-                    explanation = `Penjelasan: Area gelap pada gambar mencapai ${darkRatio.toFixed(2)}% dari total area yang dianalisis (ambang kecerahan <${DARK_THRESHOLD}). Karies awal sering ditandai dengan bercak putih kapur atau kecoklatan, namun dalam analisis warna sederhana, area yang sangat gelap dapat mengindikasikan demineralisasi atau lubang kecil. Deteksi dini sangat penting untuk mencegah kerusakan lebih parah. Perlu diingat bahwa diagnosis pasti memerlukan pemeriksaan klinis oleh dokter gigi.`;
+                    advice = "Segera lakukan tindakan pencegahan: kurangi makanan manis, sikat gigi dengan pasta gigi berfluoride, dan periksakan ke puskesmas terdekat.";
+                    explanation = `Penjelasan: Area gelap mencapai ${darkRatio.toFixed(2)}% (ambang <${DARK_THRESHOLD}). Nilai ini di atas batas sehat 2% namun masih di bawah 8%, mengindikasikan kemungkinan adanya demineralisasi atau lubang awal. Periksa secara klinis.`;
                 } else {
                     resultText = "⚠️⚠️ Hasil Analisis: Kemungkinan GIGI BERLUBANG LANJUTAN atau masalah serius.";
-                    advice = "Segera konsultasikan ke tenaga kesehatan gigi. Di daerah desa, kunjungi puskesmas atau posyandu terdekat. Jangan menunda karena infeksi dapat menyebar.";
-                    explanation = `Penjelasan: Persentase area gelap yang terdeteksi mencapai ${darkRatio.toFixed(2)}%, melebihi ambang batas 12%. Nilai ini menunjukkan adanya area yang sangat gelap dalam jumlah signifikan, yang sering berkorelasi dengan kavitas (lubang) yang sudah dalam atau bahkan jaringan gigi yang sudah mati. Kondisi ini membutuhkan perawatan segera seperti penambalan atau perawatan saluran akar. Hasil analisis ini bersifat simulasi; pastikan untuk memeriksakan diri ke profesional.`;
+                    advice = "Segera konsultasikan ke tenaga kesehatan gigi. Kunjungi puskesmas atau posyandu terdekat. Jangan menunda.";
+                    explanation = `Penjelasan: Persentase area gelap terdeteksi sebesar ${darkRatio.toFixed(2)}% (ambang <${DARK_THRESHOLD}), melebihi batas 8%. Ini mengindikasikan adanya area gelap yang signifikan, sering berkorelasi dengan kavitas dalam. Segera periksakan.`;
                 }
                 resultDiv.innerHTML = `<div class="${isHealthy ? 'result-healthy' : 'result-cavity'}"><h3>${resultText}</h3><p><strong>Saran:</strong> ${advice}</p><p><strong>🔬 Penjelasan rinci:</strong> ${explanation}</p><p><small>Catatan: Hasil deteksi berdasarkan analisis kecerahan gambar (${darkRatio.toFixed(2)}% area gelap dari total). Akurasi bergantung pada kualitas foto (pencahayaan, fokus, sudut). Jangan jadikan satu-satunya acuan diagnosis.</small></p></div>`;
                 saveHistory(resultText, advice, explanation, currentImageData);
@@ -448,4 +450,4 @@
     function showToast(msg) { const toast = document.getElementById('toast'); toast.innerText = msg; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 3000); }
 </script>
 </body>
-            </html>
+                </html>
